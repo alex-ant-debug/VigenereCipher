@@ -4,25 +4,20 @@
  Author      : Lemtugin
  Version     : v.0001
  Copyright   : Your copyright notice
- Description : Hello World in C, Ansi-style
+ Description : Deciphering the text encrypted with the Vigenère cipher
  ============================================================================
  */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <alphabet.h>
+#include </home/lemtugin/eclipse-workspace/VigenereCipher/inc/alphabet.h>
+#include "/home/lemtugin/eclipse-workspace/VigenereCipher/inc/errors.h"
 
 // an array that will contain the number of letters in the text
 static unsigned int frequentlyLetters[26];
 
 
-enum err_t
-{
-	err_OK = 0,
-	err_file = 1,
-	err_mem = 2,
-};
 
 void error(int n)
 {
@@ -38,28 +33,29 @@ unsigned int findLargestLineInFile(FILE *file)
 {
     unsigned int len = 0;
     unsigned int maxlen = 0;
-    char c;
+    char symbol;
 
-    if (!file)
+    if(!file)
     {
         error(err_file);
+        return 0;
     }
 
-    while (1)
+    while(1)
     {
         // On the first reading of the file, we find the display of the line
-        fread(&c, 1, 1, file);
-        if (c == '\r')
+        fread(&symbol, 1, 1, file);
+        if(symbol == '\r')
         {
             continue; // Ignore carriage return
         }
 
-        int e = feof(file); //Is this the end of the file?
+        int endOfFile = feof(file); //Is this the end of the file?
 
-        if (c == '\n' || e)
+        if((symbol == '\n') || (endOfFile))
         {
             // The last line can also be the longest!
-            if (len > maxlen)
+            if(len > maxlen)
             {
                 maxlen = len;
             }
@@ -70,7 +66,7 @@ unsigned int findLargestLineInFile(FILE *file)
             len++;
         }
 
-        if(e)
+        if(endOfFile)
         {
             break;
         }
@@ -195,7 +191,7 @@ void textTranscription(char *encryptedText,
     }
 }
 
-void EncodingTextFromFileToFile(char *readFile,
+err_t EncodingTextFromFileToFile(char *readFile,
                                 char *fileNameEncrypted,
                                 char *key)
 {
@@ -204,7 +200,7 @@ void EncodingTextFromFileToFile(char *readFile,
     if(!fileW)
     {
     	error(err_file);
-        return;
+        return ERR_OPEN_WRITE_FILE;
     }
 
     // Reading from the file
@@ -212,7 +208,7 @@ void EncodingTextFromFileToFile(char *readFile,
     if(!fileR)
     {
     	error(err_file);
-        return;
+        return ERR_OPEN_READ_FILE;
     }
 
     unsigned int num = findLargestLineInFile(fileR);
@@ -225,7 +221,7 @@ void EncodingTextFromFileToFile(char *readFile,
 		error(err_mem);
 	    fclose(fileR);
 	    fclose(fileW);
-		return;
+		return ERR_MEMORY;
 	}
 
     while(!feof(fileR))
@@ -235,16 +231,24 @@ void EncodingTextFromFileToFile(char *readFile,
             textEncryption(buffer, num, buffer, key);
 
             // Record the line in the file
-            fputs(buffer, fileW);
+            if(fputs(buffer, fileW) == EOF)
+            {
+            	free(buffer);
+                fclose(fileR);
+                fclose(fileW);
+                return ERR_WRITE_FILE;
+            }
         }
     }
-	free(buffer);
 
+	free(buffer);
     fclose(fileR);
     fclose(fileW);
+
+    return ERR_OK;
 }
 
-void DecodeTextFromFileToFile(char *fileNameEncrypted,
+err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
                               char *fileNameDeciphered,
                               char *key)
 {
@@ -253,7 +257,7 @@ void DecodeTextFromFileToFile(char *fileNameEncrypted,
         if(!fileW)
         {
         	error(err_file);
-            return;
+            return ERR_OPEN_WRITE_FILE;
         }
 
         // reading from a file
@@ -261,7 +265,7 @@ void DecodeTextFromFileToFile(char *fileNameEncrypted,
         if(!fileR)
         {
         	error(err_file);
-            return;
+            return ERR_OPEN_READ_FILE;
         }
 
         unsigned int num = findLargestLineInFile(fileR);
@@ -274,7 +278,7 @@ void DecodeTextFromFileToFile(char *fileNameEncrypted,
     		error(err_mem);
             fclose(fileR);
             fclose(fileW);
-    		return;
+    		return ERR_MEMORY;
     	}
 
         while(!feof(fileR))
@@ -284,13 +288,21 @@ void DecodeTextFromFileToFile(char *fileNameEncrypted,
                 textTranscription(bufferEncrypted, num, bufferEncrypted, key);
 
                 // write a string
-                fputs(bufferEncrypted, fileW);
+                if(fputs(bufferEncrypted, fileW) == EOF)
+                {
+                	free(bufferEncrypted);
+                    fclose(fileR);
+                    fclose(fileW);
+                	return ERR_WRITE_FILE;
+                }
             }
         }
-    	free(bufferEncrypted);
 
+    	free(bufferEncrypted);
         fclose(fileR);
         fclose(fileW);
+
+        return ERR_OK;
 }
 
 void countingLettersString(char *stringToCount,
@@ -454,28 +466,64 @@ void sortLetterFrequency(char *sortAlphabet,
 
 int main(int argc, char *argv[]) {
 
-    char key[12] = "distribution";
+	unsigned int i;
+	err_t err;
 
-//-----------------------We encrypt the text---------------------------
+	char *menu[] = {"encrypt",
+					"decipher",
+	                "hack"};
 
-    // Reading file
-    char * fileNameData = "data.txt";
-    // File for recording
-    char * fileNameEncrypted = "EncryptedText.txt";
+	if(argc < 3)
+	{
+		printf("You must enter the length of the count\n");
+		printf ("on the command line. Try again.\n");
+		return 1;
+	}
 
-    EncodingTextFromFileToFile(fileNameData,
-                               fileNameEncrypted,
-                               key);
+    for(i = 0; i < argc; i++)
+    {
+    	if(strcmp(argv[1], menu[i]))
+    	{
+    		break;
+    	}
+    }
 
+    switch(i)
+    {
+		case 0:{
 
-//-----------------------We decrypt on the key-----------------------
+			err = EncodingTextFromFileToFile(argv[2], argv[3], argv[4]);
 
-    // File for recording
-    char *fileNameDeciphered = "DecipheredText.txt";
+			if(err != ERR_OK)
+			{
+				printf("Encryption error %d\n", err);
+			}
+			else
+			{
+				printf("Text encryption was successful\n");
+			}
+			break;}
 
-    DecodeTextFromFileToFile(fileNameEncrypted,
-                             fileNameDeciphered,
-                             key);
+		case 1:{
+
+			err = DecodeTextFromFileToFile(argv[2], argv[3], argv[4]);
+
+			if(err != ERR_OK)
+			{
+				printf("Text decryption error %d\n", err);
+			}
+			else
+			{
+				printf("Text decryption was successful\n");
+			}
+			break;}
+
+		case 2:{
+
+			break;}
+
+		default: break;
+    }
 
 
     return EXIT_SUCCESS;

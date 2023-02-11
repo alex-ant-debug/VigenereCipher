@@ -8,7 +8,6 @@
 #include "alphabet.h"
 
 
-
 const alphabet English =
 {
     .size = 26,
