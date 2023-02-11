@@ -100,16 +100,16 @@ char letterEncryption(char A, char B)
     }
 
 
-	secondIndex -= firstLetterSmall;
+    secondIndex -= firstLetterSmall;
 
-	sumLetters = firstIndex + secondIndex;
+    sumLetters = firstIndex + secondIndex;
 
-	if(sumLetters >= English.size)
-	{
-		sumLetters -= English.size;
-	}
+    if(sumLetters >= English.size)
+    {
+        sumLetters -= English.size;
+    }
 
-	return English.Small[sumLetters];
+    return English.Small[sumLetters];
 }
 
 char letterDecoding(char A, char B)
@@ -131,16 +131,16 @@ char letterDecoding(char A, char B)
         firstIndex -= firstLetterBig;
     }
 
-	secondIndex -= firstLetterSmall;
+    secondIndex -= firstLetterSmall;
 
-	differenceLetters = firstIndex - secondIndex;
+    differenceLetters = firstIndex - secondIndex;
 
-	if(differenceLetters < 0)
-	{
-		differenceLetters += English.size;
-	}
+    if(differenceLetters < 0)
+    {
+        differenceLetters += English.size;
+    }
 
-	return English.Small[differenceLetters];
+    return English.Small[differenceLetters];
 }
 
 void textEncryption(char *text,
@@ -199,7 +199,7 @@ err_t EncodingTextFromFileToFile(char *readFile,
     FILE *fileW = fopen(fileNameEncrypted, "w");
     if(!fileW)
     {
-    	error(err_file);
+        error(err_file);
         return ERR_OPEN_WRITE_FILE;
     }
 
@@ -207,22 +207,22 @@ err_t EncodingTextFromFileToFile(char *readFile,
     FILE *fileR = fopen(readFile, "r");
     if(!fileR)
     {
-    	error(err_file);
+        error(err_file);
         return ERR_OPEN_READ_FILE;
     }
 
     unsigned int num = findLargestLineInFile(fileR);
 
-	// We allocate memory for one line
-	char *buffer = (char *)calloc((num + 3), sizeof(char));
+    // We allocate memory for one line
+    char *buffer = (char *)calloc((num + 3), sizeof(char));
 
-	if (!buffer)
-	{
-		error(err_mem);
-	    fclose(fileR);
-	    fclose(fileW);
-		return ERR_MEMORY;
-	}
+    if (!buffer)
+    {
+        error(err_mem);
+        fclose(fileR);
+        fclose(fileW);
+        return ERR_MEMORY;
+    }
 
     while(!feof(fileR))
     {
@@ -233,7 +233,7 @@ err_t EncodingTextFromFileToFile(char *readFile,
             // Record the line in the file
             if(fputs(buffer, fileW) == EOF)
             {
-            	free(buffer);
+                free(buffer);
                 fclose(fileR);
                 fclose(fileW);
                 return ERR_WRITE_FILE;
@@ -241,7 +241,7 @@ err_t EncodingTextFromFileToFile(char *readFile,
         }
     }
 
-	free(buffer);
+    free(buffer);
     fclose(fileR);
     fclose(fileW);
 
@@ -256,7 +256,7 @@ err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
         FILE *fileW = fopen(fileNameDeciphered, "w");
         if(!fileW)
         {
-        	error(err_file);
+            error(err_file);
             return ERR_OPEN_WRITE_FILE;
         }
 
@@ -264,22 +264,22 @@ err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
         FILE *fileR = fopen(fileNameEncrypted, "r");
         if(!fileR)
         {
-        	error(err_file);
+            error(err_file);
             return ERR_OPEN_READ_FILE;
         }
 
         unsigned int num = findLargestLineInFile(fileR);
 
-    	// We allocate memory for one line
-    	char *bufferEncrypted = (char *)calloc((num + 3), sizeof(char));
+        // We allocate memory for one line
+        char *bufferEncrypted = (char *)calloc((num + 3), sizeof(char));
 
-    	if (!bufferEncrypted)
-    	{
-    		error(err_mem);
+        if (!bufferEncrypted)
+        {
+            error(err_mem);
             fclose(fileR);
             fclose(fileW);
-    		return ERR_MEMORY;
-    	}
+            return ERR_MEMORY;
+        }
 
         while(!feof(fileR))
         {
@@ -290,15 +290,15 @@ err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
                 // write a string
                 if(fputs(bufferEncrypted, fileW) == EOF)
                 {
-                	free(bufferEncrypted);
+                    free(bufferEncrypted);
                     fclose(fileR);
                     fclose(fileW);
-                	return ERR_WRITE_FILE;
+                    return ERR_WRITE_FILE;
                 }
             }
         }
 
-    	free(bufferEncrypted);
+        free(bufferEncrypted);
         fclose(fileR);
         fclose(fileW);
 
@@ -466,63 +466,63 @@ void sortLetterFrequency(char *sortAlphabet,
 
 int main(int argc, char *argv[]) {
 
-	unsigned int i;
-	err_t err;
+    unsigned int i;
+    err_t err;
 
-	char *menu[] = {"encrypt",
-					"decipher",
-	                "hack"};
+    char *menu[] = {"encrypt",
+                    "decipher",
+                    "hack"};
 
-	if(argc < 3)
-	{
-		printf("You must enter the length of the count\n");
-		printf ("on the command line. Try again.\n");
-		return 1;
-	}
+    if(argc < 3)
+    {
+        printf("You must enter the length of the count\n");
+        printf ("on the command line. Try again.\n");
+        return 1;
+    }
 
     for(i = 0; i < argc; i++)
     {
-    	if(strcmp(argv[1], menu[i]))
-    	{
-    		break;
-    	}
+        if(strcmp(argv[1], menu[i]))
+        {
+            break;
+        }
     }
 
     switch(i)
     {
-		case 0:{
+        case 0:{
 
-			err = EncodingTextFromFileToFile(argv[2], argv[3], argv[4]);
+            err = EncodingTextFromFileToFile(argv[2], argv[3], argv[4]);
 
-			if(err != ERR_OK)
-			{
-				printf("Encryption error %d\n", err);
-			}
-			else
-			{
-				printf("Text encryption was successful\n");
-			}
-			break;}
+            if(err != ERR_OK)
+            {
+                printf("Encryption error %d\n", err);
+            }
+            else
+            {
+                printf("Text encryption was successful\n");
+            }
+            break;}
 
-		case 1:{
+        case 1:{
 
-			err = DecodeTextFromFileToFile(argv[2], argv[3], argv[4]);
+            err = DecodeTextFromFileToFile(argv[2], argv[3], argv[4]);
 
-			if(err != ERR_OK)
-			{
-				printf("Text decryption error %d\n", err);
-			}
-			else
-			{
-				printf("Text decryption was successful\n");
-			}
-			break;}
+            if(err != ERR_OK)
+            {
+                printf("Text decryption error %d\n", err);
+            }
+            else
+            {
+                printf("Text decryption was successful\n");
+            }
+            break;}
 
-		case 2:{
+        case 2:{
 
-			break;}
+            break;}
 
-		default: break;
+        default: break;
     }
 
 
