@@ -8,10 +8,12 @@
 #include "alphabet.h"
 
 
+
 const alphabet English =
 {
-	.size = 26,
-	.Big = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-	.Small = "abcdefghijklmnopqrstuvwxyz",
-	.frequentlyUsedLetters = "etaoinshrdlcumwfgypbvkxjqz"
+    .size = 26,
+    .Big = "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+    .Small = "abcdefghijklmnopqrstuvwxyz",
+    .frequentlyUsedLetters = "etaoinshrdlcumwfgypbvkxjqz",
+    .dictionary = "dictionaryEnglish.txt"
 };

@@ -10,10 +10,11 @@
 
 typedef struct alphabet
 {
-	unsigned int size;
-	char *Big;
-	char *Small;
-	char *frequentlyUsedLetters;
+    unsigned int size;
+    char *Big;
+    char *Small;
+    char *frequentlyUsedLetters;
+    const char *dictionary;
 }alphabet;
 
 extern const alphabet English;
