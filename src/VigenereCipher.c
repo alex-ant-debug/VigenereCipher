@@ -11,12 +11,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include </home/lemtugin/eclipse-workspace/VigenereCipher/inc/alphabet.h>
-#include "/home/lemtugin/eclipse-workspace/VigenereCipher/inc/errors.h"
+#include <threads.h>
+#include <stdbool.h>
+
+#include "../inc/alphabet.h"
+#include "../inc/errors.h"
 
 // an array that will contain the number of letters in the text
 static unsigned int frequentlyLetters[26];
 
+
+static mtx_t mutex_read_file;
+static mtx_t mutex_write_file;
+static mtx_t mutex_array_access;
 
 
 void error(int n)
@@ -33,7 +40,6 @@ unsigned int findLargestLineInFile(FILE *file)
 {
     unsigned int len = 0;
     unsigned int maxlen = 0;
-    char symbol;
 
     if(!file)
     {
@@ -41,8 +47,14 @@ unsigned int findLargestLineInFile(FILE *file)
         return 0;
     }
 
+    if(mtx_lock(&mutex_read_file) != 0)
+    {
+        return 0;
+    }
+
     while(1)
     {
+        char symbol = 0;
         // On the first reading of the file, we find the display of the line
         fread(&symbol, 1, 1, file);
         if(symbol == '\r')
@@ -71,10 +83,9 @@ unsigned int findLargestLineInFile(FILE *file)
             break;
         }
     }
-
-    printf("Max. length of string = %d\n", maxlen);
-
     fseek(file, 0L, SEEK_SET);
+
+    mtx_unlock(&mutex_read_file);
 
     return (maxlen + 3);
 }
@@ -195,12 +206,23 @@ err_t EncodingTextFromFileToFile(char *readFile,
                                 char *fileNameEncrypted,
                                 char *key)
 {
+    if(mtx_lock(&mutex_write_file) != 0)
+    {
+        return 0;
+    }
+
     // Write to the file
     FILE *fileW = fopen(fileNameEncrypted, "w");
     if(!fileW)
     {
         error(err_file);
+        mtx_unlock(&mutex_write_file);
         return ERR_OPEN_WRITE_FILE;
+    }
+
+    if(mtx_lock(&mutex_read_file) != 0)
+    {
+        return 0;
     }
 
     // Reading from the file
@@ -208,11 +230,16 @@ err_t EncodingTextFromFileToFile(char *readFile,
     if(!fileR)
     {
         error(err_file);
+        mtx_unlock(&mutex_read_file);
         return ERR_OPEN_READ_FILE;
     }
 
     unsigned int num = findLargestLineInFile(fileR);
 
+    if(mtx_lock(&mutex_array_access) != 0)
+    {
+        return 0;
+    }
     // We allocate memory for one line
     char *buffer = (char *)calloc((num + 3), sizeof(char));
 
@@ -221,6 +248,10 @@ err_t EncodingTextFromFileToFile(char *readFile,
         error(err_mem);
         fclose(fileR);
         fclose(fileW);
+        mtx_unlock(&mutex_array_access);
+        mtx_unlock(&mutex_read_file);
+        mtx_unlock(&mutex_write_file);
+
         return ERR_MEMORY;
     }
 
@@ -236,6 +267,10 @@ err_t EncodingTextFromFileToFile(char *readFile,
                 free(buffer);
                 fclose(fileR);
                 fclose(fileW);
+                mtx_unlock(&mutex_array_access);
+                mtx_unlock(&mutex_read_file);
+                mtx_unlock(&mutex_write_file);
+
                 return ERR_WRITE_FILE;
             }
         }
@@ -244,6 +279,9 @@ err_t EncodingTextFromFileToFile(char *readFile,
     free(buffer);
     fclose(fileR);
     fclose(fileW);
+    mtx_unlock(&mutex_array_access);
+    mtx_unlock(&mutex_read_file);
+    mtx_unlock(&mutex_write_file);
 
     return ERR_OK;
 }
@@ -252,57 +290,85 @@ err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
                               char *fileNameDeciphered,
                               char *key)
 {
-        // writing to file
-        FILE *fileW = fopen(fileNameDeciphered, "w");
-        if(!fileW)
-        {
-            error(err_file);
-            return ERR_OPEN_WRITE_FILE;
-        }
+    if(mtx_lock(&mutex_write_file) != 0)
+    {
+        return 0;
+    }
 
-        // reading from a file
-        FILE *fileR = fopen(fileNameEncrypted, "r");
-        if(!fileR)
-        {
-            error(err_file);
-            return ERR_OPEN_READ_FILE;
-        }
+    // writing to file
+    FILE *fileW = fopen(fileNameDeciphered, "w");
+    if(!fileW)
+    {
+        error(err_file);
+        mtx_unlock(&mutex_write_file);
+        return ERR_OPEN_WRITE_FILE;
+    }
 
-        unsigned int num = findLargestLineInFile(fileR);
+    if(mtx_lock(&mutex_read_file) != 0)
+    {
+        return 0;
+    }
 
-        // We allocate memory for one line
-        char *bufferEncrypted = (char *)calloc((num + 3), sizeof(char));
+    // reading from a file
+    FILE *fileR = fopen(fileNameEncrypted, "r");
+    if(!fileR)
+    {
+        error(err_file);
+        mtx_unlock(&mutex_read_file);
+        return ERR_OPEN_READ_FILE;
+    }
 
-        if (!bufferEncrypted)
-        {
-            error(err_mem);
-            fclose(fileR);
-            fclose(fileW);
-            return ERR_MEMORY;
-        }
+    unsigned int num = findLargestLineInFile(fileR);
 
-        while(!feof(fileR))
-        {
-            if (fgets(bufferEncrypted, num, fileR))
-            {
-                textTranscription(bufferEncrypted, num, bufferEncrypted, key);
+    if(mtx_lock(&mutex_array_access) != 0)
+    {
+        return 0;
+    }
 
-                // write a string
-                if(fputs(bufferEncrypted, fileW) == EOF)
-                {
-                    free(bufferEncrypted);
-                    fclose(fileR);
-                    fclose(fileW);
-                    return ERR_WRITE_FILE;
-                }
-            }
-        }
+    // We allocate memory for one line
+    char *bufferEncrypted = (char *)calloc((num + 3), sizeof(char));
 
-        free(bufferEncrypted);
+    if (!bufferEncrypted)
+    {
+        error(err_mem);
         fclose(fileR);
         fclose(fileW);
+        mtx_unlock(&mutex_array_access);
+        mtx_unlock(&mutex_read_file);
+        mtx_unlock(&mutex_write_file);
 
-        return ERR_OK;
+        return ERR_MEMORY;
+    }
+
+    while(!feof(fileR))
+    {
+        if (fgets(bufferEncrypted, num, fileR))
+        {
+            textTranscription(bufferEncrypted, num, bufferEncrypted, key);
+
+            // write a string
+            if(fputs(bufferEncrypted, fileW) == EOF)
+            {
+                free(bufferEncrypted);
+                fclose(fileR);
+                fclose(fileW);
+                mtx_unlock(&mutex_array_access);
+                mtx_unlock(&mutex_read_file);
+                mtx_unlock(&mutex_write_file);
+
+                return ERR_WRITE_FILE;
+            }
+        }
+    }
+
+    free(bufferEncrypted);
+    fclose(fileR);
+    fclose(fileW);
+    mtx_unlock(&mutex_array_access);
+    mtx_unlock(&mutex_read_file);
+    mtx_unlock(&mutex_write_file);
+
+    return ERR_OK;
 }
 
 void countingLettersString(char *stringToCount,
@@ -325,9 +391,8 @@ void countingLettersString(char *stringToCount,
     }
 }
 
-unsigned int hitIndexCalculation()
+unsigned int findingKeySize(float *hitIndex)
 {
-    float hitIndex[English.size];
     unsigned int numberLettersInText = 0;
 
     for(unsigned int i = 0; i < English.size; i++)
@@ -335,17 +400,17 @@ unsigned int hitIndexCalculation()
         //Calculation of the number of letters in the text
         numberLettersInText += frequentlyLetters[i];
     }
-    printf("numberLettersInText = %d\n", numberLettersInText);
 
-    unsigned int maxIndex = 5;
+    unsigned int maxIndex = 0;
     float max = 0;
+    float matchIndice = 0;
 
     for(unsigned int i = 0; i < English.size; i++)
     {
         float temp = frequentlyLetters[i];
-        //hitIndex[i] = (temp*100)/numberLettersInText;
         hitIndex[i] = temp*((temp - 1)/(numberLettersInText*(numberLettersInText - 1)));
         printf("hitIndex[%d] = %f\n", i, hitIndex[i]);
+        matchIndice += hitIndex[i];
 
         if((max < hitIndex[i]) && (i > 3) && (i < 21))
         {
@@ -383,7 +448,8 @@ void frequencyAnalysis(FILE *readFile,
     fseek(readFile, 0L, SEEK_SET);
 
 
-    unsigned int sizeKey = hitIndexCalculation() + 1;
+    float hitIndex[English.size];
+    unsigned int sizeKey = findingKeySize(hitIndex) + 1;
 
     printf("sizeKey = %d\n", sizeKey);
 
@@ -403,29 +469,7 @@ void frequencyAnalysis(FILE *readFile,
         printf("frequently[%d] = %d\n", i, frequently[i]);
     }
 
-    unsigned int maxIndex = 0;
-    float max = 0;
-    float hitIndex[English.size];
-    float coincidenceIndex = 0;
 
-    for(unsigned int i = 0; i < English.size; i++)
-    {
-        float temp = frequently[i];
-        //hitIndex[i] = (temp*100)/numberLettersInText;
-        hitIndex[i] = temp*((temp - 1)/(941*(941 - 1)));
-        printf("hitIndex[%d] = %f\n", i, hitIndex[i]);
-
-        coincidenceIndex += hitIndex[i];
-
-        if(max < hitIndex[i])
-        {
-            max = hitIndex[i];
-            maxIndex = i;
-        }
-    }
-
-    printf("maxIndex = %d\n", maxIndex);
-    printf("Coincidence Index = %f\n", coincidenceIndex);
 
     free(buffer);
 
@@ -462,6 +506,24 @@ void sortLetterFrequency(char *sortAlphabet,
 }
 
 
+void crackCipher(char *readFile, char *fileNameDeciphered)
+{
+    // reading from a file
+    FILE *fpEncrypted = fopen(readFile, "r");
+
+    if(!fpEncrypted)
+    {
+        error(err_file);
+        return;
+    }
+
+
+    frequencyAnalysis(fpEncrypted, frequentlyLetters, English.size);
+
+
+    fclose(fpEncrypted);
+}
+
 
 
 int main(int argc, char *argv[]) {
@@ -475,8 +537,17 @@ int main(int argc, char *argv[]) {
 
     if(argc < 3)
     {
-        printf("You must enter the length of the count\n");
-        printf ("on the command line. Try again.\n");
+        printf("You must enter the command with parameters:\n");
+        printf("  <command> <read file> <write file> <key>\n");
+        printf("Or, to crack an encrypted file, type:\n");
+        printf("  <command> <read file> <write file>\n");
+        printf("where:\n");
+        printf("  <command>    -  action selection command, can be:\n");
+        printf("                  encrypt, decipher, hack\n");
+        printf("  <read file>  -  file for reading data\n");
+        printf("  <write file> -  file for writing decrypted or ciphertext\n");
+        printf("  <key>        -  fkeyword to encrypt or decrypt text\n");
+
         return 1;
     }
 
@@ -519,6 +590,8 @@ int main(int argc, char *argv[]) {
             break;}
 
         case 2:{
+
+            crackCipher(argv[2], argv[3]);
 
             break;}
 

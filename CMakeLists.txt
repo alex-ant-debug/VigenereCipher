@@ -11,6 +11,10 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/inc)  # Connecting a file header
 
 add_library(language STATIC ${SOURCE_LIB})	       # Create a static library with a language name
 
+find_library(PTHREAD_LIBRARY pthread)                # Include the pthreads library
+
 add_executable(VigenereCipher ${SOURCE_EXE})	       # Creates an executable named VigenereCipher
 
-target_link_libraries(VigenereCipher language)       # Linking a program with a library
+target_link_libraries(VigenereCipher language ${PTHREAD_LIBRARY})       # Linking a program with a library
+
+target_compile_options(VigenereCipher PRIVATE -std=c11)   # Connect C11 standard
