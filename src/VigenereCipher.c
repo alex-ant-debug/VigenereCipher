@@ -17,6 +17,13 @@
 #include "../inc/alphabet.h"
 #include "../inc/errors.h"
 
+
+typedef struct keyRating_t
+{
+    char key[15];
+    unsigned int rating;
+}keyRating_t;
+
 // an array that will contain the number of letters in the text
 static unsigned int frequentlyLetters[26];
 
@@ -44,11 +51,6 @@ unsigned int findLargestLineInFile(FILE *file)
     if(!file)
     {
         error(err_file);
-        return 0;
-    }
-
-    if(mtx_lock(&mutex_read_file) != 0)
-    {
         return 0;
     }
 
@@ -84,8 +86,6 @@ unsigned int findLargestLineInFile(FILE *file)
         }
     }
     fseek(file, 0L, SEEK_SET);
-
-    mtx_unlock(&mutex_read_file);
 
     return (maxlen + 3);
 }
@@ -412,12 +412,14 @@ unsigned int findingKeySize(float *hitIndex)
         printf("hitIndex[%d] = %f\n", i, hitIndex[i]);
         matchIndice += hitIndex[i];
 
+        // key size lookup
         if((max < hitIndex[i]) && (i > 3) && (i < 21))
         {
             max = hitIndex[i];
             maxIndex = i;
         }
     }
+    printf("matchIndice = %f\n", matchIndice);
 
     return maxIndex;
 }
@@ -447,12 +449,10 @@ void frequencyAnalysis(FILE *readFile,
 
     fseek(readFile, 0L, SEEK_SET);
 
-
     float hitIndex[English.size];
     unsigned int sizeKey = findingKeySize(hitIndex) + 1;
 
     printf("sizeKey = %d\n", sizeKey);
-
 
     static unsigned int frequently[26] = {0};
 
@@ -468,8 +468,6 @@ void frequencyAnalysis(FILE *readFile,
     {
         printf("frequently[%d] = %d\n", i, frequently[i]);
     }
-
-
 
     free(buffer);
 
@@ -505,9 +503,165 @@ void sortLetterFrequency(char *sortAlphabet,
     }
 }
 
+unsigned int countExistingWords(FILE *dictionary,
+                                unsigned int maxSizeWord,
+                                char *checkedFile)
+{
+    unsigned int numberDetectedWords = 0;
+
+    // open the file to be checked
+    FILE *fileRead = fopen(checkedFile, "r");
+    if(!fileRead)
+    {
+        error(err_file);
+        return ERR_OPEN_READ_FILE;
+    }
+
+    unsigned int num = findLargestLineInFile(fileRead);
+
+    // We allocate memory for one line
+    char *encryptedString = (char *)calloc((num + 3), sizeof(char));
+
+    if (!encryptedString)
+    {
+        error(err_mem);
+        fclose(fileRead);
+        return ERR_MEMORY;
+    }
+
+    // move the dictionary pointer to the beginning of the dictionary
+    fseek(dictionary, 0L, SEEK_SET);
+
+    while(!feof(fileRead))
+    {
+        if (fgets(encryptedString, num, fileRead))
+        {
+            unsigned int lengthWord = findLargestLineInFile(dictionary);
+            char *wordFromDictionary = (char*)calloc(lengthWord, sizeof(char*));
+
+            // read file being checked
+            while(!feof(dictionary))
+            {
+                if (fgets(wordFromDictionary, lengthWord, dictionary))
+                {
+                    char *copyEncryptedString = encryptedString;
+                    unsigned int sizeWord = strlen(wordFromDictionary);
+                    char copyWordFromDictionary[sizeWord];
+
+                    strcpy(copyWordFromDictionary, wordFromDictionary);
+                    copyWordFromDictionary[sizeWord-1] = 0;
+
+                    while(copyEncryptedString)
+                    {
+                        copyEncryptedString = strstr(copyEncryptedString, copyWordFromDictionary);
+
+                        if(copyEncryptedString)
+                        {
+                            numberDetectedWords++;
+                            copyEncryptedString +=1;
+                        }
+                    }
+                }
+            }
+            fseek(dictionary, 0L, SEEK_SET);
+            free(wordFromDictionary);
+        }
+    }
+    fclose(fileRead);
+    free(encryptedString);
+
+    return numberDetectedWords;
+}
+
+err_t enumerationKeys(char *readFile, char *fileWrite, unsigned int sizeKey)
+{
+    unsigned int maxNumberKeys = 10;
+    unsigned int numKey = 0;
+    static unsigned int currentPosition = 0;
+
+    keyRating_t *selectedKey = (keyRating_t *)calloc(maxNumberKeys, sizeof(keyRating_t));
+
+    // reading a dictionary
+    FILE *dictionary = fopen(English.dictionary, "r");
+    if(!dictionary)
+    {
+        error(err_file);
+        printf("Failed to open dictionary\n");
+        return ERR_OPEN_DICTIONARY;
+    }
+    unsigned int num = findLargestLineInFile(dictionary);
+
+    char *keyFromDictionary = (char *)calloc(num, sizeof(char *));
+
+    if (!keyFromDictionary)
+    {
+        error(err_mem);
+        fclose(dictionary);
+        free(selectedKey);
+        return ERR_MEMORY;
+    }
+
+    while(!feof(dictionary))
+    {
+        if (fgets(keyFromDictionary, num, dictionary))
+        {
+            size_t sizeWord = strlen(keyFromDictionary);
+            // save the current position in the dictionary
+            currentPosition +=  sizeWord;
+
+            if((sizeKey + 1) == sizeWord)
+            {
+                // select the key
+                DecodeTextFromFileToFile(readFile, fileWrite, keyFromDictionary);
+                // count the number of words that matched the dictionary and write it to selectedKey
+                selectedKey[numKey].rating = countExistingWords(dictionary, num, fileWrite);
+                strcpy(selectedKey[numKey].key, keyFromDictionary);
+                numKey++;
+                //return a dictionary pointer to the previous value to use the new key
+                fseek(dictionary, (currentPosition + 1) - sizeWord, SEEK_SET);
+            }
+        }
+    }
+
+    unsigned int maxRating = 0;
+    unsigned int indexMaxRating = 0;
+
+    for(unsigned int i = 0; i < maxNumberKeys; i++)
+    {
+        if(selectedKey[i].rating)
+        {
+            printf("key = %srating = %d\n", selectedKey[i].key, selectedKey[i].rating);
+        }
+
+        if(maxRating < selectedKey[i].rating)
+        {
+            maxRating = selectedKey[i].rating;
+            indexMaxRating = i;
+        }
+    }
+    fclose(dictionary);
+    free(keyFromDictionary);
+
+
+    if(selectedKey[0].rating)
+    {
+        printf("key = %s\n", selectedKey[indexMaxRating].key);
+        free(selectedKey);
+        return ERR_OK;
+    }
+    else
+    {
+        printf("The key could not be found from the dictionary\n");
+        free(selectedKey);
+        return ERR_NO_KEY_DICTIONARY;
+    }
+}
+
 
 void crackCipher(char *readFile, char *fileNameDeciphered)
 {
+    err_t err;
+
     // reading from a file
     FILE *fpEncrypted = fopen(readFile, "r");
 
@@ -517,11 +671,45 @@ void crackCipher(char *readFile, char *fileNameDeciphered)
         return;
     }
 
+    unsigned int num = findLargestLineInFile(fpEncrypted);
 
-    frequencyAnalysis(fpEncrypted, frequentlyLetters, English.size);
+    // We allocate memory for one line
+    char *buffer = (char *)calloc((num + 3), sizeof(char));
 
+    if (!buffer)
+    {
+        error(err_mem);
+    }
+
+    while(!feof(fpEncrypted))
+    {
+        if (fgets(buffer, num, fpEncrypted))
+        {
+            countingLettersString(buffer, frequentlyLetters, 0, 1);
+        }
+    }
+
+    fseek(fpEncrypted, 0L, SEEK_SET);
+
+
+    float hitIndex[English.size];
+    unsigned int sizeKey = findingKeySize(hitIndex) + 1;
+
+    printf("sizeKey = %d\n", sizeKey);
 
     fclose(fpEncrypted);
+
+    err = enumerationKeys(readFile, fileNameDeciphered, 12);
+
+    if(err != ERR_OK)
+    {
+        //frequencyAnalysis(fpEncrypted, frequentlyLetters, English.size);
+    }
+    else
+    {
+        //DecodeTextFromFileToFile(readFile, fileNameDeciphered, );
+    }
+
 }
 
 
@@ -553,7 +741,7 @@ int main(int argc, char *argv[]) {
 
     for(i = 0; i < argc; i++)
     {
-        if(strcmp(argv[1], menu[i]))
+        if(strcmp(argv[1], menu[i]) == 0)
         {
             break;
         }

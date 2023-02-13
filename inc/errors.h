@@ -18,12 +18,14 @@ enum error
 
 typedef enum err_t
 {
-    ERR_OK              = 0,    /**< Success - no error */
-    ERR_OPEN_READ_FILE  = 1,
-    ERR_OPEN_WRITE_FILE = 2,
-    ERR_WRITE_FILE      = 3,
-    ERR_MEMORY          = 4,
-    ERR_WOULDBLOCK      = 5,
+    ERR_OK                = 0,    /**< Success - no error */
+    ERR_OPEN_READ_FILE    = 1,
+    ERR_OPEN_WRITE_FILE   = 2,
+    ERR_WRITE_FILE        = 3,
+    ERR_MEMORY            = 4,
+    ERR_WOULDBLOCK        = 5,
+	ERR_OPEN_DICTIONARY   = 6,
+    ERR_NO_KEY_DICTIONARY = 7,
 
 }err_t;
 
