@@ -103,7 +103,37 @@ void textEncryption(char *text,
                     char *encryptedText,
                     char *key)
 ```
-This function loops through the "text" file line by line and passes those lines to the "textEncryption()" function.
+This function loops through the "text" file line by line and passes those lines to the "textEncryption()" function. If the character is not a letter then it is skipped. At the same time, the key is moved.
 ```C++
 void textEncryption(char *text, size_t sizeText, char *encryptedText, char *key)
+```
+The textEncryption function shifts the alphabet of the letter "A" to the right by the value of the index of the letter "B" in the alphabet. If the letter index goes beyond the alphabet index, then the shift continues, but with the index of the beginning of the alphabet. This function returns the letter with the offset.
+  This project has additional files errors.h, alphabet.h and language.c. The errors.h file contains the user-defined data type err_t, which lists the errors that may occur during program operation. There is also an "error" enum which is used to display errors.
+  
+  The file "alphabet.h" contains a user-defined data type, the "alphabet" structure, whose fields store the language property. The language contains strings listing the alphabet itself in small and large cases. The language also has a language size field, a string listing commonly used characters, and a string with the name of the dictionary file. This data type is made for convenience, for example, if you need to decrypt texts in several languages, then the properties of each language can be described in the "language.c" file. So far there is only one language, it is English.
+  
+Consider the "crackCipher()" function, it is called in the main function. It is intended for deciphering text without a key word. It opens two files, one for reading the ciphertext and one for writing attempts at the decrypted text. After that, the file requiring decryption is read line by line in the loop. Each line is written to the "buffer" variable, after which the "countingLettersString()" function counts how many times each letter of the alphabet was used in the text. This information is written to the "frequentlyLetters" variable.
+```C++
+  err_t crackCipher(char *readFile, char *fileNameDeciphered)
+```
+This function also finds the word length of the key. This is done using the "findingKeySize()" function. After the approximate length of the key has been found, the function "enumerationKeys()" is called, it selects the key word from the dictionary. If the word key is present in the dictionary it will return the message "ERR_OK", if not it will return an error message.If an error message is returned, the "hackingWithMutualIndex()" function will run, which looks up the word key using the index of matches. On success it will return "ERR_OK", on failure it will return an error code. All error codes in the "crackCipher()" function are written to the "err" variable. If at the end of the function its value is "ERR_OK", then the "DecodeTextFromFileToFile()" function will be called, which will decrypt the file using the received key. And the "printFile()" function will also be called, which will print the contents of the decrypted file to the terminal window.
+
+```C++
+unsigned int findingKeySize(float *hitIndex)
+```
+The "findingKeySize()" function searches for an approximate key size. An array with a length equal to the length of the alphabet is written to the argument of this function. This function calculates the match index for each letter of the alphabet in the decrypted text. Then it finds the letter with the highest match index value. The index of a given letter in the alphabet indicates the word length of the key. There are restrictions in this function, the key cannot be less than 3 letters or more than 21 letters.The function returns the approximate key size.
+
+The function "enumerationKeys()" selects a key from the available words in the dictionary.The arguments to this function are also two files, the encrypted file and the file that will be written to during decryption. Also, the estimated word length of the key and the string in which the found key will be written are passed to the arguments.
+
+```C++
+err_t enumerationKeys(char *readFile,
+                      char *fileWrite,
+                      unsigned int sizeKey,
+                      char *key)
+```
+If the operation is successful, it returns ERR_OK, if one of the resources is blocked by another thread, it returns ERR_BLOCK_TREAD. If the file cannot be opened for reading it returns ERR_OPEN_READ_FILE, if the file cannot be opened for writing it returns ERR_OPEN_WRITE_FILE. It also returns ERR_MEMORY on unsuccessful memory allocation. In this function, after opening the files, a cycle of line-by-line reading of the dictionary file is started. The string data is stored in the "keyFromDictionary" buffer, after which a string with a size equal to the size of the key word is searched for. When words of this length are found, the "DecodeTextFromFileToFile()" function is launched, which decrypts the encrypted file using the given key. After decryption, the "countExistingWords()" function is launched, which counts the words in the decrypted text that match the words in the dictionary. This value is written to the array of variables "selectedKey[numKey].rating" and the word key itself is also written to it. At the end of reading the dictionary, using this array, you can determine the key word by the maximum number of "existing" words found. If the key is found, then the key itself is printed into the terminal window and it is also written to the "key" variable.
+```C++
+err_t hackingWithMutualIndex(char *readFile,
+                             char *fileWrite,
+                             unsigned int sizeKey)
 ```
