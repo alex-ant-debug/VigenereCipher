@@ -215,8 +215,8 @@ void textTranscription(char *encryptedText,
 }
 
 err_t EncodingTextFromFileToFile(char *readFile,
-                                char *fileNameEncrypted,
-                                char *key)
+                                 char *fileNameEncrypted,
+                                 char *key)
 {
     if(mtx_lock(&mutex_encoding) != 0)
     {
@@ -247,7 +247,7 @@ err_t EncodingTextFromFileToFile(char *readFile,
     // We allocate memory for one line
     char *buffer = (char *)calloc((num + 3), sizeof(char));
 
-    if (!buffer)
+    if(!buffer)
     {
         error(err_mem);
         fclose(fileR);
@@ -259,7 +259,7 @@ err_t EncodingTextFromFileToFile(char *readFile,
 
     while(!feof(fileR))
     {
-        if (fgets(buffer, num, fileR))
+        if(fgets(buffer, num, fileR))
         {
             textEncryption(buffer, num, buffer, key);
 
@@ -317,7 +317,7 @@ err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
     // We allocate memory for one line
     char *bufferEncrypted = (char *)calloc((num + 3), sizeof(char));
 
-    if (!bufferEncrypted)
+    if(!bufferEncrypted)
     {
         error(err_mem);
         fclose(fileR);
@@ -329,7 +329,7 @@ err_t DecodeTextFromFileToFile(char *fileNameEncrypted,
 
     while(!feof(fileR))
     {
-        if (fgets(bufferEncrypted, num, fileR))
+        if(fgets(bufferEncrypted, num, fileR))
         {
             textTranscription(bufferEncrypted, num, bufferEncrypted, key);
 
@@ -535,7 +535,7 @@ err_t hackingWithMutualIndex(char *readFile,
 
     // We allocate memory for one line
     char *bufferEncrypted = (char *)calloc((num + 3), sizeof(char));
-    if (!bufferEncrypted)
+    if(!bufferEncrypted)
     {
         error(err_mem);
         fclose(fileR);
@@ -546,7 +546,7 @@ err_t hackingWithMutualIndex(char *readFile,
 
     while(!feof(fileR))
     {
-        if (fgets(bufferEncrypted, num, fileR))
+        if(fgets(bufferEncrypted, num, fileR))
         {
             size_t sizeSrting = strlen(bufferEncrypted);
             unsigned int numberSubstrings = sizeSrting/sizeKey;
@@ -661,7 +661,7 @@ unsigned int countExistingWords(FILE *dictionary,
 
     // We allocate memory for one line
     char *encryptedString = (char *)calloc((num + 3), sizeof(char*));
-    if (!encryptedString)
+    if(!encryptedString)
     {
         error(err_mem);
         fclose(fileRead);
@@ -674,7 +674,7 @@ unsigned int countExistingWords(FILE *dictionary,
     // read file being checked
     while(!feof(fileRead))
     {
-        if (fgets(encryptedString, num, fileRead))
+        if(fgets(encryptedString, num, fileRead))
         {
             unsigned int lengthWord = findLargestLineInFile(dictionary);
             char *wordFromDictionary = (char*)calloc(lengthWord, sizeof(char*));
@@ -682,7 +682,7 @@ unsigned int countExistingWords(FILE *dictionary,
             // dictionary reading
             while(!feof(dictionary))
             {
-                if (fgets(wordFromDictionary, lengthWord, dictionary))
+                if(fgets(wordFromDictionary, lengthWord, dictionary))
                 {
                     char *copyEncryptedString = encryptedString;
                     unsigned int sizeWord = strlen(wordFromDictionary);
@@ -729,7 +729,7 @@ err_t enumerationKeys(char *readFile,
     }
 
     keyRating_t *selectedKey = (keyRating_t *)calloc(maxNumberKeys, sizeof(keyRating_t));
-    if (!selectedKey)
+    if(!selectedKey)
     {
         error(err_mem);
         mtx_unlock(&mutex_enumeration);
@@ -748,7 +748,7 @@ err_t enumerationKeys(char *readFile,
     unsigned int num = findLargestLineInFile(dictionary);
 
     char *keyFromDictionary = (char *)calloc(num, sizeof(char *));
-    if (!keyFromDictionary)
+    if(!keyFromDictionary)
     {
         error(err_mem);
         fclose(dictionary);
@@ -759,7 +759,7 @@ err_t enumerationKeys(char *readFile,
 
     while(!feof(dictionary))
     {
-        if (fgets(keyFromDictionary, num, dictionary))
+        if(fgets(keyFromDictionary, num, dictionary))
         {
             size_t sizeWord = strlen(keyFromDictionary);
             // save the current position in the dictionary
@@ -831,7 +831,7 @@ err_t printFile(char *fileRead)
 
     // We allocate memory for one line
     char *buffer = (char *)calloc((num + 3), sizeof(char));
-    if (!buffer)
+    if(!buffer)
     {
         error(err_mem);
         fclose(fileR);
@@ -842,7 +842,7 @@ err_t printFile(char *fileRead)
 
     while(!feof(fileR))
     {
-        if (fgets(buffer, num, fileR))
+        if(fgets(buffer, num, fileR))
         {
             printf("%s\n", buffer);
         }
@@ -877,7 +877,7 @@ err_t crackCipher(char *readFile, char *fileNameDeciphered)
 
     // We allocate memory for one line
     char *buffer = (char *)calloc((num + 3), sizeof(char));
-    if (!buffer)
+    if(!buffer)
     {
         error(err_mem);
         fclose(fpEncrypted);
@@ -887,7 +887,7 @@ err_t crackCipher(char *readFile, char *fileNameDeciphered)
 
     while(!feof(fpEncrypted))
     {
-        if (fgets(buffer, num, fpEncrypted))
+        if(fgets(buffer, num, fpEncrypted))
         {
             countingLettersString(buffer, frequentlyLetters, 0, 1);
         }
@@ -897,7 +897,7 @@ err_t crackCipher(char *readFile, char *fileNameDeciphered)
     free(buffer);
 
     float *hitIndex = (float*)calloc(English.size, sizeof(float));
-    if (!hitIndex)
+    if(!hitIndex)
     {
         error(err_mem);
         return ERR_MEMORY;
