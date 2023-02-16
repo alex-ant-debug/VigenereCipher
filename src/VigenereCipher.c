@@ -29,7 +29,7 @@ typedef struct keyRating_t
 // structure for calculating the match index for different offsets
 typedef struct matchIndexShift_t
 {
-	char shift;
+    char shift;
     unsigned int rating[26];
 }matchIndexShift_t;
 
@@ -376,14 +376,14 @@ void countingLettersString(char *stringToCount,
 
 unsigned int calculationNumberLettersText(unsigned int *freqLetters)
 {
-	unsigned int numberLettersInText = 0;
+    unsigned int numberLettersInText = 0;
 
-	for(unsigned int i = 0; i < English.size; i++)
-	{
-		numberLettersInText += freqLetters[i];
-	}
+    for(unsigned int i = 0; i < English.size; i++)
+    {
+        numberLettersInText += freqLetters[i];
+    }
 
-	return numberLettersInText;
+    return numberLettersInText;
 }
 
 
@@ -413,96 +413,96 @@ unsigned int findingKeySize(float *hitIndex)
 }
 
 void keySizedSubstrings(char *bufferEncrypted,
-		                unsigned int sizeSrting,
-						char **arrayString,
-						unsigned int sizeKey)
+                        unsigned int sizeSrting,
+                        char **arrayString,
+                        unsigned int sizeKey)
 {
-	unsigned int lineCounter = 0;
+    unsigned int lineCounter = 0;
 
-	for(unsigned int i = 0, j = 0; i < sizeSrting; i++)
-	{
-		if(bufferEncrypted[i] == '\0')
-		{
-			break;
-		}
+    for(unsigned int i = 0, j = 0; i < sizeSrting; i++)
+    {
+        if(bufferEncrypted[i] == '\0')
+        {
+            break;
+        }
 
-		if((bufferEncrypted[i] >= 'a') && (bufferEncrypted[i] <= 'z'))
-		{
-			arrayString[lineCounter][j] = bufferEncrypted[i];
+        if((bufferEncrypted[i] >= 'a') && (bufferEncrypted[i] <= 'z'))
+        {
+            arrayString[lineCounter][j] = bufferEncrypted[i];
 
-			if(j == 11)
-			{
-				arrayString[lineCounter][sizeKey] = '\0';
-				lineCounter++;
-				j = 0;
-			}
-			else
-			{
-				j++;
-			}
-		}
-	}
+            if(j == 11)
+            {
+                arrayString[lineCounter][sizeKey] = '\0';
+                lineCounter++;
+                j = 0;
+            }
+            else
+            {
+                j++;
+            }
+        }
+    }
 }
 
 void stringAlphabetShift(char *array,
-		                 unsigned int sizeKey,
-						 unsigned int shiftKey)
+                         unsigned int sizeKey,
+                         unsigned int shiftKey)
 {
-	for(unsigned int i = 0; i < sizeKey; i++)
-	{
-		if((array[i] == '\0'))
-		{
-			break;
-		}
+    for(unsigned int i = 0; i < sizeKey; i++)
+    {
+        if((array[i] == '\0'))
+        {
+            break;
+        }
 
-		char shift = array[i] - shiftKey;
+        char shift = array[i] - shiftKey;
 
-		array[i] = ((shift) < 'a')? 'z' - ('a' - shift): shift;
-	}
+        array[i] = ((shift) < 'a')? 'z' - ('a' - shift): shift;
+    }
 }
 
 void countingFreqLettersInPairLines(char *firstLine,
-		                            char *secondLine,
-									unsigned int *rating,
-									unsigned int sizeKey)
+                                    char *secondLine,
+                                    unsigned int *rating,
+                                    unsigned int sizeKey)
 {
-	for(unsigned int i = 0; i < English.size; i++)
-	{
-		for(unsigned int j = 0; j < sizeKey + 1; j++)
-		{
-			if(firstLine[j] == English.Small[i])
-			{
-				rating[i] += 1;
-			}
+    for(unsigned int i = 0; i < English.size; i++)
+    {
+        for(unsigned int j = 0; j < sizeKey + 1; j++)
+        {
+            if(firstLine[j] == English.Small[i])
+            {
+                rating[i] += 1;
+            }
 
-			if(secondLine[j] == English.Small[i])
-			{
-				rating[i] += 1;
-			}
-		}
-	}
+            if(secondLine[j] == English.Small[i])
+            {
+                rating[i] += 1;
+            }
+        }
+    }
 }
 
 void countMutualIndexRows(matchIndexShift_t *offsetEachLetter,
-		                  float *mutualMatchIndex)
+                          float *mutualMatchIndex)
 {
-	for(unsigned int shift = 0; shift < English.size; shift++)
-	{
-		unsigned int numberLetters = calculationNumberLettersText(offsetEachLetter[shift].rating);
+    for(unsigned int shift = 0; shift < English.size; shift++)
+    {
+        unsigned int numberLetters = calculationNumberLettersText(offsetEachLetter[shift].rating);
 
-		numberLetters *= (numberLetters - 1);
-		// index calculation at one shift
-		for(unsigned int i = 0; i < English.size; i++)
-		{
-			float temp = offsetEachLetter[shift].rating[i];
+        numberLetters *= (numberLetters - 1);
+        // index calculation at one shift
+        for(unsigned int i = 0; i < English.size; i++)
+        {
+            float temp = offsetEachLetter[shift].rating[i];
 
-			if(temp)
-			{
-				temp *= (temp - 1);
-				mutualMatchIndex[shift] += temp/numberLetters;
-			}
-		}
-	}
+            if(temp)
+            {
+                temp *= (temp - 1);
+                mutualMatchIndex[shift] += temp/numberLetters;
+            }
+        }
+    }
 }
 
 err_t hackingWithMutualIndex(char *readFile,
@@ -514,13 +514,13 @@ err_t hackingWithMutualIndex(char *readFile,
         return ERR_BLOCK_TREAD;
     }
 
-	matchIndexShift_t *offsetEachLetter = (matchIndexShift_t*)calloc(English.size, sizeof(matchIndexShift_t));
-	if(!offsetEachLetter)
-	{
-		error(err_file);
-		mtx_unlock(&mutex_hackMI);
-		return ERR_OPEN_READ_FILE;
-	}
+    matchIndexShift_t *offsetEachLetter = (matchIndexShift_t*)calloc(English.size, sizeof(matchIndexShift_t));
+    if(!offsetEachLetter)
+    {
+        error(err_file);
+        mtx_unlock(&mutex_hackMI);
+        return ERR_OPEN_READ_FILE;
+    }
 
     FILE *fileR = fopen(readFile, "r");
     if(!fileR)
@@ -548,65 +548,65 @@ err_t hackingWithMutualIndex(char *readFile,
     {
         if (fgets(bufferEncrypted, num, fileR))
         {
-        	size_t sizeSrting = strlen(bufferEncrypted);
-        	unsigned int numberSubstrings = sizeSrting/sizeKey;
-        	// allocated memory for an array of strings, each string is the size of a key
-        	char **arrayString = (char**)calloc(numberSubstrings, sizeof(char*));
+            size_t sizeSrting = strlen(bufferEncrypted);
+            unsigned int numberSubstrings = sizeSrting/sizeKey;
+            // allocated memory for an array of strings, each string is the size of a key
+            char **arrayString = (char**)calloc(numberSubstrings, sizeof(char*));
 
-        	for(unsigned int i = 0; i < numberSubstrings; i++)
-        	{
-        		arrayString[i]=(char *)calloc(sizeKey + 1, sizeof(char));
-        	}
-        	// splitting a string into substrings the size of a key
-        	keySizedSubstrings(bufferEncrypted, sizeSrting, arrayString, sizeKey);
+            for(unsigned int i = 0; i < numberSubstrings; i++)
+            {
+                arrayString[i]=(char *)calloc(sizeKey + 1, sizeof(char));
+            }
+            // splitting a string into substrings the size of a key
+            keySizedSubstrings(bufferEncrypted, sizeSrting, arrayString, sizeKey);
 
-        	for(unsigned int shiftKey = 1; shiftKey < English.size; shiftKey++)
-        	{
-        		offsetEachLetter[shiftKey-1].shift = shiftKey;
-        		// loop through the arrayString array line by line, take two lines and
-        		// on the second line we shift the alphabet relative to the alphabet of the previous line
-				for(unsigned int i = 0; i < (numberSubstrings) - 1; i++)
-				{
-					if(arrayString[i + 1][0] == '\0')
-					{
-						break;
-					}
-					char *array = (char*)calloc(sizeKey+1, sizeof(char*));
-					strcpy(array, arrayString[i + 1]);
+            for(unsigned int shiftKey = 1; shiftKey < English.size; shiftKey++)
+            {
+                offsetEachLetter[shiftKey-1].shift = shiftKey;
+                // loop through the arrayString array line by line, take two lines and
+                // on the second line we shift the alphabet relative to the alphabet of the previous line
+                for(unsigned int i = 0; i < (numberSubstrings) - 1; i++)
+                {
+                    if(arrayString[i + 1][0] == '\0')
+                    {
+                        break;
+                    }
+                    char *array = (char*)calloc(sizeKey+1, sizeof(char*));
+                    strcpy(array, arrayString[i + 1]);
 
-					// string alphabet shift
-					stringAlphabetShift(array, sizeKey, shiftKey);
-					// counting the frequency of letters in a pair of lines
-					countingFreqLettersInPairLines(arrayString[i],
-							                       array,
-												   offsetEachLetter[shiftKey-1].rating,
-												   sizeKey);
-					free(array);
-				}
-        	}
-        	// memory free
-        	for(unsigned int i = 0; i < numberSubstrings; i++)
-        	{
-        		free(arrayString[i]);
-        	}
-        	free(arrayString);
+                    // string alphabet shift
+                    stringAlphabetShift(array, sizeKey, shiftKey);
+                    // counting the frequency of letters in a pair of lines
+                    countingFreqLettersInPairLines(arrayString[i],
+                                                   array,
+                                                   offsetEachLetter[shiftKey-1].rating,
+                                                   sizeKey);
+                    free(array);
+                }
+            }
+            // memory free
+            for(unsigned int i = 0; i < numberSubstrings; i++)
+            {
+                free(arrayString[i]);
+            }
+            free(arrayString);
         }
     }
     free(bufferEncrypted);
     fclose(fileR);
 
-	//count the mutual index of rows
+    //count the mutual index of rows
     float *mutualMatchIndex = (float*)calloc(English.size, sizeof(float));
-	countMutualIndexRows(offsetEachLetter, mutualMatchIndex);
+    countMutualIndexRows(offsetEachLetter, mutualMatchIndex);
 
-	for(unsigned int shift = 0; shift < English.size; shift++)
-	{
-		printf("mutualMatchIndex[%u] = %e\n", shift, mutualMatchIndex[shift]);
-	}
+    for(unsigned int shift = 0; shift < English.size; shift++)
+    {
+        printf("mutualMatchIndex[%u] = %e\n", shift, mutualMatchIndex[shift]);
+    }
 
-	//Here we must determine the maximums by mutualMatchIndex and select the desired key
+    //Here we must determine the maximums by mutualMatchIndex and select the desired key
 
-	free(mutualMatchIndex);
+    free(mutualMatchIndex);
     free(offsetEachLetter);
     mtx_unlock(&mutex_hackMI);
 
@@ -844,7 +844,7 @@ err_t printFile(char *fileRead)
     {
         if (fgets(buffer, num, fileR))
         {
-        	printf("%s\n", buffer);
+            printf("%s\n", buffer);
         }
     }
 
@@ -911,7 +911,7 @@ err_t crackCipher(char *readFile, char *fileNameDeciphered)
 
     if(sizeKey > MAX_SIZE_KEY)
     {
-    	sizeKey = MAX_SIZE_KEY;
+        sizeKey = MAX_SIZE_KEY;
     }
 
     char *key = (char*)calloc(sizeKey, sizeof(char));
@@ -920,13 +920,13 @@ err_t crackCipher(char *readFile, char *fileNameDeciphered)
 
     if(err != ERR_OK)
     {
-    	err = hackingWithMutualIndex(readFile, fileNameDeciphered, sizeKey);
+        err = hackingWithMutualIndex(readFile, fileNameDeciphered, sizeKey);
     }
 
     if(err == ERR_OK)
     {
-    	err = DecodeTextFromFileToFile(readFile, fileNameDeciphered, key);
-    	printFile(fileNameDeciphered);
+        err = DecodeTextFromFileToFile(readFile, fileNameDeciphered, key);
+        printFile(fileNameDeciphered);
     }
     free(key);
 
