@@ -23,9 +23,9 @@ typedef enum err_t
     ERR_OPEN_WRITE_FILE   = 2,    /** Error opening file for writing */
     ERR_WRITE_FILE        = 3,    /** File write error */
     ERR_MEMORY            = 4,    /** Memory allocation error */
-	ERR_OPEN_DICTIONARY   = 5,    /** Dictionary opening error */
+    ERR_OPEN_DICTIONARY   = 5,    /** Dictionary opening error */
     ERR_NO_KEY_DICTIONARY = 6,    /** Error no key in dictionary */
-	ERR_BLOCK_TREAD       = 7,    /** Failed to block the current thread */
+    ERR_BLOCK_TREAD       = 7,    /** Failed to block the current thread */
 
 }err_t;
 

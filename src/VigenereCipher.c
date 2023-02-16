@@ -506,8 +506,8 @@ void countMutualIndexRows(matchIndexShift_t *offsetEachLetter,
 }
 
 err_t hackingWithMutualIndex(char *readFile,
-		                     char *fileWrite,
-							 unsigned int sizeKey)
+                             char *fileWrite,
+                             unsigned int sizeKey)
 {
     if(mtx_lock(&mutex_hackMI) != 0)
     {
@@ -715,9 +715,9 @@ unsigned int countExistingWords(FILE *dictionary,
 }
 
 err_t enumerationKeys(char *readFile,
-		              char *fileWrite,
-					  unsigned int sizeKey,
-					  char *key)
+                      char *fileWrite,
+                      unsigned int sizeKey,
+                      char *key)
 {
     unsigned int maxNumberKeys = 10; // maximum number of matched keys
     unsigned int numKey = 0;
